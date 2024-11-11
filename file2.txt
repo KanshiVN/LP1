@@ -1,0 +1,1379 @@
+
+
+3 Write a program to simulate CPU Scheduling Algorithms: FCFS
+
+#include <iostream>
+using namespace std;
+int main()
+{	
+    int bt[20], wt[20], tat[20], ct[20], at[20], i, n;
+    float wtavg = 0, tatavg = 0;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+    for (i = 0; i < n; i++)
+    {
+        cout << "Enter Arrival Time for Process " << i+1 << ": ";
+        cin >> at[i];
+        cout << "Enter Burst Time for Process " << i+1 << ": ";
+        cin >> bt[i];
+    }
+    ct[0] = at[0] + bt[0];
+    tat[0] = ct[0] - at[0];
+    wt[0] = tat[0] - bt[0];
+    wtavg += wt[0];
+    tatavg += tat[0];
+    for (i = 1; i < n; i++)
+    {
+        if (at[i] > ct[i - 1])
+            ct[i] = at[i] + bt[i];
+        else
+            ct[i] = ct[i - 1] + bt[i];
+
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+        wtavg += wt[i];
+        tatavg += tat[i];   
+    
+    }
+
+    cout << "\nPROCESS \tARRIVAL TIME \tBURST TIME \tCOMPLETION TIME \tTURNAROUND TIME \tWAITING TIME\n";
+    for (i = 0; i < n; i++)
+    {
+        cout << "\n\t P" << i+1 << "\t\t " << at[i] << "\t\t " << bt[i] << "\t\t " << ct[i] << "\t\t " << tat[i] << "\t\t " << wt[i];
+    }
+    cout << "\nAverage Waiting Time -- " << wtavg / n;
+    cout << "\nAverage Turnaround Time -- " << tatavg / n;
+    return 0;
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------
+4.Write a program to simulate CPU Scheduling Algorithms SJF (Preemptive)
+
+#include <iostream>
+#include <climits>
+using namespace std;
+
+int main() {
+    int bt[20], wt[20], tat[20], ct[20], at[20], remaining_bt[20], n, i, j, t = 0;
+    float wtavg = 0, tatavg = 0;
+    
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    for (i = 0; i < n; i++) {
+        cout << "Enter Arrival Time for Process " << i+1 << ": ";
+        cin >> at[i];
+        cout << "Enter Burst Time for Process " << i+1 << ": ";
+        cin >> bt[i];
+        remaining_bt[i] = bt[i];  // Initialize remaining burst time
+    }
+
+    int completed = 0, min_bt, shortest, finish_time;
+    bool check[n] = {0}; // To check if the process is completed
+
+    while (completed < n) {
+        min_bt = INT_MAX;
+        shortest = -1;
+        // Find process with minimum burst time that has arrived and not completed
+        for (i = 0; i < n; i++) {
+            if (at[i] <= t && !check[i] && remaining_bt[i] < min_bt && remaining_bt[i] > 0) {
+                min_bt = remaining_bt[i];
+                shortest = i;
+            }
+        }
+
+        if (shortest == -1) {
+            t++; // If no process is ready to execute, increment time
+            continue;
+        }
+
+        // Execute the selected process for one time unit
+        remaining_bt[shortest]--;
+        t++;
+
+        // If the process is completed
+        if (remaining_bt[shortest] == 0) {
+            check[shortest] = 1;
+            completed++;
+            finish_time = t;
+            ct[shortest] = finish_time;
+            tat[shortest] = ct[shortest] - at[shortest];
+            wt[shortest] = tat[shortest] - bt[shortest];
+            wtavg += wt[shortest];
+            tatavg += tat[shortest];
+        }
+    }
+
+    cout << "\nPROCESS \tARRIVAL TIME \tBURST TIME \tCOMPLETION TIME \tTURNAROUND TIME \tWAITING TIME\n";
+    for (i = 0; i < n; i++) {
+        cout << "\n\t P" << i << "\t\t " << at[i] << "\t\t " << bt[i] << "\t\t " << ct[i] << "\t\t " << tat[i] << "\t\t " << wt[i];
+    }
+
+    cout << "\nAverage Waiting Time -- " << wtavg / n;
+    cout << "\nAverage Turnaround Time -- " << tatavg / n;
+
+    return 0;
+}
+---------------------------------------------------------------------------------------------------------------------------------------
+5 Write a program to simulate CPU Scheduling Algorithm: Priority (Non-Preemptive)
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Process {
+    int pid;              // Process ID
+    int burstTime;        // Burst Time
+    int priority;         // Priority
+    int waitingTime;      // Waiting Time
+    int turnAroundTime;   // Turnaround Time
+};
+
+void calculateTimes(vector<Process>& proc) {
+    int totalWaitingTime = 0, totalTurnAroundTime = 0;
+
+    // Calculate Waiting Time for each process
+    proc[0].waitingTime = 0; // First process has 0 waiting time
+    for (size_t i = 1; i < proc.size(); i++) {
+        proc[i].waitingTime = proc[i - 1].waitingTime + proc[i - 1].burstTime;
+    }
+
+    // Calculate Turnaround Time for each process
+    for (auto& p : proc) {
+        p.turnAroundTime = p.waitingTime + p.burstTime;
+        totalWaitingTime += p.waitingTime;
+        totalTurnAroundTime += p.turnAroundTime;
+    }
+
+    cout << "\nProcess\tPriority\tBurst Time\tWaiting Time\tTurnaround Time\n";
+    for (const auto& p : proc) {
+        cout << "P" << p.pid << "\t" << p.priority << "\t\t" << p.burstTime
+             << "\t\t" << p.waitingTime << "\t\t" << p.turnAroundTime << '\n';
+    }
+
+    cout << "\nAverage Waiting Time: " << static_cast<float>(totalWaitingTime) / proc.size();
+    cout << "\nAverage Turnaround Time: " << static_cast<float>(totalTurnAroundTime) / proc.size() << '\n';
+}
+
+void priorityScheduling(vector<Process>& proc) {
+    // Sort processes by priority (lower number indicates higher priority)
+    sort(proc.begin(), proc.end(), [](const Process& a, const Process& b) {
+        return a.priority < b.priority;
+    });
+
+    calculateTimes(proc);
+}
+
+int main() {
+    int n;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    vector<Process> proc(n);
+
+    for (int i = 0; i < n; i++) {
+        proc[i].pid = i + 1;
+        cout << "Enter Burst Time for Process " << i + 1 << ": ";
+        cin >> proc[i].burstTime;
+        cout << "Enter Priority for Process " << i + 1 << ": ";
+        cin >> proc[i].priority;
+    }
+
+    priorityScheduling(proc);
+
+    return 0;
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------
+6 Write a program to simulate CPU Scheduling Algorithm: Round Robin (Preemptive).
+
+#include <iostream>
+#include <queue>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int n, time_quantum;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    cout << "Enter the time quantum: ";
+    cin >> time_quantum;
+
+    // Arrays for storing process properties
+    int pid[n];             // Process ID
+    int arrival_time[n];    // Arrival time
+    int burst_time[n];      // Burst time
+    int remaining_time[n];  // Remaining burst time for each process
+    int completion_time[n]; // Completion time
+    int waiting_time[n];    // Waiting time
+    int turnaround_time[n]; // Turnaround time
+    bool in_queue[n] = {0}; // To check if a process is already in the queue
+
+    // Input arrival and burst times for each process
+    for (int i = 0; i < n; i++) {
+        pid[i] = i + 1; // Assign process ID
+        cout << "Enter arrival time and burst time for process " << pid[i] << ": ";
+        cin >> arrival_time[i] >> burst_time[i];
+        remaining_time[i] = burst_time[i]; // Initially, remaining time is equal to burst time
+    }
+
+    int current_time = 0;     // Current time
+    int completed_count = 0;  // Completed process count
+    double total_waiting_time = 0;
+    double total_turnaround_time = 0;
+
+    queue<int> q; // Queue for Round Robin scheduling
+
+    // Add initial processes that have arrived at time 0
+    for (int i = 0; i < n; i++) {
+        if (arrival_time[i] <= current_time && !in_queue[i]) {
+            q.push(i);
+            in_queue[i] = true;
+        }
+    }
+
+    // Round Robin scheduling loop
+    while (completed_count < n) {
+        if (q.empty()) {
+            current_time++;
+            // Add processes that have arrived at the new current time
+            for (int i = 0; i < n; i++) {
+                if (arrival_time[i] <= current_time && !in_queue[i]) {
+                    q.push(i);
+                    in_queue[i] = true;
+                }
+            }
+            continue;
+        }
+
+        int i = q.front();
+        q.pop();
+
+        // Process for time quantum or until completion
+        if (remaining_time[i] > time_quantum) {
+            current_time += time_quantum;
+            remaining_time[i] -= time_quantum;
+        } else {
+            current_time += remaining_time[i];
+            completion_time[i] = current_time;
+            turnaround_time[i] = completion_time[i] - arrival_time[i];
+            waiting_time[i] = turnaround_time[i] - burst_time[i];
+            total_waiting_time += waiting_time[i];
+            total_turnaround_time += turnaround_time[i];
+            remaining_time[i] = 0;
+            completed_count++;
+        }
+
+        // Add new processes that have arrived up to current time
+        for (int j = 0; j < n; j++) {
+            if (arrival_time[j] <= current_time && !in_queue[j] && remaining_time[j] > 0) {
+                q.push(j);
+                in_queue[j] = true;
+            }
+        }
+
+        // Re-add current process to queue if it still has remaining time
+        if (remaining_time[i] > 0) {
+            q.push(i);
+        }
+    }
+
+    // Display the results
+    cout << "PID\tArrival Time\tBurst Time\tCompletion Time\tTurnaround Time\tWaiting Time\n";
+    for (int i = 0; i < n; i++) {
+        cout << pid[i] << "\t" << arrival_time[i] << "\t\t" << burst_time[i] << "\t\t" 
+             << completion_time[i] << "\t\t" << turnaround_time[i] << "\t\t" << waiting_time[i] << "\n";
+    }
+
+    cout << "\nAverage Waiting Time: " << (total_waiting_time / n) << "\n";
+    cout << "Average Turnaround Time: " << (total_turnaround_time / n) << "\n";
+
+return 0;
+}
+
+-------------------------------------------------------------------------------------------------------------------------------------
+7 Write a program to simulate Memory placement strategies – best fit.
+#include<iostream>
+#include<vector>
+#include<iomanip>
+using namespace std;
+
+#define MAX 25  // Fixing the MAX definition
+
+int main() {
+
+    vector<int> b(MAX), f(MAX), bf(MAX, 0), ff(MAX), frag(MAX);
+    int nb, nf, temp, lowest;
+
+    cout << "Enter number of blocks: ";
+    cin >> nb;
+    cout << "Enter number of files: ";
+    cin >> nf;
+
+    cout << "\nEnter the size of the blocks:\n";
+    for (int i = 0; i < nb; i++) {  // 0-based indexing for blocks
+        cout << "Block " << i + 1 << ": ";
+        cin >> b[i];
+    }
+
+    cout << "Enter the size of the files:\n";
+    for (int i = 0; i < nf; i++) {  // 0-based indexing for files
+        cout << "File " << i + 1 << ": ";
+        cin >> f[i];
+    }
+
+    // First fit allocation
+    for (int i = 0; i < nf; i++) {
+        lowest = 10000;  // Reset lowest fragment to a high value
+        for (int j = 0; j < nb; j++) {  // Loop through the blocks
+            if (bf[j] != 1) {  // Block is free
+                temp = b[j] - f[i];  // Calculate the leftover space (fragment)
+                if (temp >= 0 && temp < lowest) {  // If block is large enough and has the smallest fragment
+                    ff[i] = j;  // Allocate the block to the file
+                    lowest = temp;
+                }
+            }
+        }
+        
+        // If a block was allocated
+        if (ff[i] != -1) {
+            frag[i] = lowest;  // Store the fragment size
+            bf[ff[i]] = 1;  // Mark the block as occupied
+        } else {
+            frag[i] = -1;  // No block was allocated
+        }
+    }
+
+    // Display the results
+    cout << "\nFile No\tFile Size\tBlock No\tBlock Size\tFragment\n";
+    for (int i = 0; i < nf; ++i) {  // Loop through files
+        if (ff[i] != -1) {  // File is allocated a block
+            cout << i + 1 << "\t\t" << f[i] << "\t\t" << ff[i] + 1 << "\t\t" << b[ff[i]] << "\t\t" << frag[i] << "\n";
+        } else {
+            cout << i + 1 << "\t\t" << f[i] << "\t\tNot Allocated\t\t-\n";
+        }
+    }
+
+    return 0;
+}
+-------------------------------------------------------------------------------------------------------------------------------------
+8 Write a program to simulate Memory placement strategies –  first fit.
+
+#include <iostream>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
+#define MAX 25
+
+int main() {
+    vector<int> b(MAX), f(MAX), bf(MAX, 0), ff(MAX, -1), frag(MAX, -1);
+    int nb, nf, temp;
+
+    cout << "\nMemory Management Scheme - First Fit";
+    cout << "\nEnter the number of blocks: ";
+    cin >> nb;
+    cout << "Enter the number of files: ";
+    cin >> nf;
+
+    cout << "\nEnter the size of the blocks:\n";
+    for (int i = 0; i < nb; ++i) {  // Using 0-based indexing
+        cout << "Block " << i + 1 << ": ";
+        cin >> b[i];
+    }
+
+    cout << "Enter the size of the files:\n";
+    for (int i = 0; i < nf; ++i) {  // Using 0-based indexing
+        cout << "File " << i + 1 << ": ";
+        cin >> f[i];
+    }
+
+    for (int i = 0; i < nf; ++i) {
+        bool allocated = false;
+        for (int j = 0; j < nb; ++j) {  // Using 0-based indexing
+            if (bf[j] != 1) {  // If the block is not allocated
+                temp = b[j] - f[i];
+                if (temp >= 0) {  // Block is large enough to fit the file
+                    ff[i] = j;
+                    frag[i] = temp;
+                    bf[j] = 1;  // Mark block as allocated
+                    allocated = true;
+                    break;  // Exit the loop once a block is allocated
+                }
+            }
+        }
+        if (!allocated) {
+            ff[i] = -1;  // Indicate that the file couldn't be allocated
+            frag[i] = -1;
+        }
+    }
+
+    cout << "\nFile No\tFile Size\tBlock No\tBlock Size\tFragment\n";
+    for (int i = 0; i < nf; ++i) {  // Using 0-based indexing
+        cout << i + 1 << "\t\t" << f[i] << "\t\t";
+        if (ff[i] != -1) {
+            cout << ff[i] + 1 << "\t\t" << b[ff[i]] << "\t\t" << frag[i] << endl;
+        } else {
+            cout << "Not Allocated\t\t-" << endl;
+        }
+    }
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+
+9 Write a program to simulate Memory placement strategies – worst fit.
+#include <iostream>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
+#define MAX 25
+
+int main() {
+    vector<int> b(MAX), f(MAX), bf(MAX, 0), ff(MAX), frag(MAX);
+    int nb, nf, highest = 0;
+
+    cout << "\nMemory Management Scheme - Worst Fit";
+    cout << "\nEnter the number of blocks: ";
+    cin >> nb;
+    cout << "Enter the number of files: ";
+    cin >> nf;
+
+    cout << "\nEnter the size of the blocks:-\n";
+    for (int i = 0; i < nb; ++i) {
+        cout << "Block " << i << ": ";
+        cin >> b[i];
+    }
+
+    cout << "Enter the size of the files :-\n";
+    for (int i = 0; i < nf; ++i) {
+        cout << "File " << i << ": ";
+        cin >> f[i];
+    }
+
+    for (int i = 0; i < nf; ++i) {
+        highest = 0;
+        for (int j = 0; j < nb; ++j) {
+            if (bf[j] != 1) { // if bf[j] is not allocated
+                int temp = b[j] - f[i];
+                if (temp >= 0 && highest < temp) {
+                    ff[i] = j;
+                    highest = temp;
+                }
+            }
+        }
+        frag[i] = highest;
+        bf[ff[i]] = 1;
+    }
+
+    cout << "\nFile_no:\tFile_size:\tBlock_no:\tBlock_size:\tFragment";
+    for (int i = 1; i <= nf; ++i) {
+        cout << "\n" << i << "\t\t" << f[i] << "\t\t" << ff[i] << "\t\t" << b[ff[i]] << "\t\t" << frag[i];
+    }
+
+    return 0;
+}
+---------------------------------------------------------------------------------------------------------------------------------------
+
+10 Write a program to  simulate page replacement Algorithm: FIFO
+#include <iostream>
+using namespace std;
+
+int main() {
+    int k,f, pf = 0, count = 0, rs[25], m[10], n;
+
+    cout << "Enter the length of reference string: ";
+    cin >> n;
+
+    cout << "Enter the reference string: ";
+    for (int i = 0; i < n; i++) {
+        cin >> rs[i];
+    }
+
+    cout << "Enter number of frames: ";
+    cin >> f;
+
+    // Initialize frames with -1 (representing empty slots)
+    for (int i = 0; i < f; i++) {
+        m[i] = -1;
+    }
+
+    cout << "\nThe Page Replacement Process is:\n";
+
+    for (int i = 0; i < n; i++) {
+        for (k = 0; k < f; k++) {
+            if (m[k] == rs[i]) { // Page is already in frame
+                break;
+            }
+        }
+
+        if (k == f) { // Page not found in frames, need to replace
+            m[count++] = rs[i];
+            pf++; // Increment page fault count
+        }
+
+        // Print the current frames
+        for (int j = 0; j < f; j++) {
+            cout << "\t" << m[j];
+        }
+
+        if (k == f) {
+            cout << "\tPF No. " << pf;
+        }
+        cout << endl;
+
+        // Circular replacement logic
+        if (count == f) {
+            count = 0;
+        }
+    }
+
+    cout << "\nThe number of Page Faults using FIFO are: " << pf << endl;
+
+    return 0;
+}
+---------------------------------------------------------------------------------------------------------------------------------------
+11 Write a program to  simulate page replacement Algorithm:  LRU
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n, f, pf = 0, next = 1;
+
+    // Input the length of the reference string
+    cout << "Enter the length of reference string: ";
+    cin >> n;
+
+    vector<int> rs(n);  // Reference string
+
+    // Input the reference string
+    cout << "Enter the reference string: ";
+    for (int i = 0; i < n; i++) {
+        cin >> rs[i];
+    }
+
+    // Input the number of frames
+    cout << "Enter the number of frames: ";
+    cin >> f;
+
+    // Now we initialize the vectors for frames and counters after knowing 'f'
+    vector<int> m(f, -1);  // Frames initialized to -1 (empty)
+    vector<int> count(f, 0);  // Count initialized to 0 (unused pages)
+    vector<int> flag(n, 0);  // Flag to check if page is found
+
+    cout << "\nThe Page Replacement process is:\n";
+
+    // Process each page in the reference string
+    for (int i = 0; i < n; i++) {
+        bool pageFound = false;
+
+        // Check if the page is already in one of the frames
+        for (int j = 0; j < f; j++) {
+            if (m[j] == rs[i]) {
+                flag[i] = 1;  // Mark the page as found
+                count[j] = next;  // Update the last time this page was accessed
+                next++;  // Increment next to track the time
+                pageFound = true;
+                break;
+            }
+        }
+
+        // If page was not found, we need to replace a page
+        if (!pageFound) {
+            if (i < f) {
+                m[i] = rs[i];  // Load the page into the first empty frame
+                count[i] = next;
+                next++;
+            } else {
+                // Find the page with the least recent use (smallest count)
+                int min = 0;
+                for (int j = 1; j < f; j++) {
+                    if (count[min] > count[j]) {
+                        min = j;
+                    }
+                }
+                // Replace the page with the least recent use
+                m[min] = rs[i];
+                count[min] = next;
+                next++; 
+            }
+            pf++;  // Increment page fault count
+        }
+
+        // Print the current state of the frames
+        for (int j = 0; j < f; j++) {
+            cout << m[j] << "\t";
+        }
+
+        // If a page fault occurred, print the page fault number
+        if (!pageFound) {
+            cout << "PF No. -- " << pf;
+        }
+
+        cout << endl;
+    }
+
+    cout << "\nThe number of page faults using LRU are: " << pf << endl;
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------------------
+12 Write a program to  simulate page replacement Algorithm: LFU
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+int main() {
+    int m, f, pf = 0, min;
+    
+    // Input the number of page references and reference string
+    cout << "Enter number of page references: ";
+    cin >> m;
+
+    vector<int> rs(m);  // Reference string
+    cout << "Enter the reference string: ";
+    for (int i = 0; i < m; i++) {
+        cin >> rs[i];
+    }
+
+    // Input the number of available frames
+    cout << "Enter the available number of frames: ";
+    cin >> f;
+
+    vector<int> a(f, -1);  // Frames array, initialized with -1 (empty)
+    vector<int> cntr(f, 0);  // Counter array for frequency of pages
+    pf = 0;
+
+    cout << "\nThe Page Replacement Process is:\n";
+
+    // Loop over each page reference
+    for (int i = 0; i < m; i++) {
+        bool pageFound = false;
+        
+        // Check if the page is already in a frame
+        for (int j = 0; j < f; j++) {
+            if (rs[i] == a[j]) {
+                cntr[j]++;  // Increment frequency counter for this page
+                pageFound = true;
+                break;
+            }
+        }
+
+        // If page was not found in any frame, replace a page
+        if (!pageFound) {
+            min = 0;
+            for (int k = 1; k < f; k++) {
+                if (cntr[k] < cntr[min]) {
+                    min = k;  // Find the least frequently used page
+                }
+            }
+
+            // Replace the page with the least frequency
+            a[min] = rs[i];
+            cntr[min] = 1;  // Reset the counter for the newly placed page
+            pf++;  // Increment page fault count
+        }
+
+        // Print the current frame contents
+        for (int j = 0; j < f; j++) {
+            cout << "\t" << a[j];
+        }
+
+        if (!pageFound) {
+            cout << "\tPF No. " << pf;
+        }
+
+        cout << endl;
+    }
+
+    cout << "\nTotal number of page faults: " << pf << endl;
+
+    return 0;
+}
+-------------------------------------------------------------------------------------
+------------------------11]pass-1 assembler--------------------------------------------
+ class SymTab {
+    int index;
+    String name;
+    int addr;
+
+    SymTab(int i, String s, int a) {
+        index = i;
+        name = s;
+        addr = a;
+    }
+}
+
+class LitTab {
+    int index;
+    String name;
+    int addr;
+
+    LitTab(int i, String a, int addr) {
+        index = i;
+        name = a;
+        this.addr = addr;
+    }
+
+    void setAddr(int a) {
+        addr = a;
+    }
+}
+
+class PoolTab {
+    int pIndex;
+    int lIndex;
+
+    PoolTab(int i, int a) {
+        pIndex = i;
+        lIndex = a;
+    }
+}
+
+public class Pass1 {
+    public static void main(String[] args) {
+        String[][] input = {
+            {null, "START", "100", null},
+            {null, "MOVER", "AREG", "A"},
+            {"AGAIN", "ADD", "AREG", "='2"},
+            {null, "ADD", "AREG", "B"},
+            {"AGAIN", "ADD", "AREG", "='3"},
+            {null, "LTORG", null, null},
+            {"AGAIN2", "ADD", "AREG", "BREG"},
+            {"AGAIN2", "ADD", "AREG", "CREG"},
+            {"AGAIN", "ADD", "AREG", "='2"},
+            {null, "DC", "B", "3"},
+            {"LOOP", "DS", "A", "1"},
+            {null, "END", null, null}
+        };
+
+        SymTab[] symTab = new SymTab[20];
+        LitTab[] litTab = new LitTab[20];
+        PoolTab[] poolTab = new PoolTab[20];
+
+        int loc = Integer.parseInt(input[0][2]);
+        int i = 1, sn = 0, ln = 0, Inc = 0, pn = 0;
+        String m = input[1][1];
+
+        while (!m.equals("END")) {
+            if (check(m) == 1) {
+                if (input[i][0] == null) {
+                    String op1 = input[i][2];
+                    String op2 = input[i][3];
+                    if (comp(op2, symTab, sn) == 1) {
+                        symTab[sn] = new SymTab(sn, op2, 0);
+                        sn++;
+                    } else if (comp(op2, symTab, sn) == 2) {
+                        litTab[ln] = new LitTab(ln, op2, 0);
+                        ln++;
+                    }
+                    loc++;
+                    i++;
+                } else {
+                    String op1 = input[i][0];
+                    symTab[sn] = new SymTab(sn, op1, loc);
+                    sn++;
+                    String op2 = input[i][3];
+                    if (comp(op2, symTab, sn) == 1) {
+                        symTab[sn] = new SymTab(sn, op2, 0);
+                        sn++;
+                    } else if (comp(op2, symTab, sn) == 2) {
+                        litTab[ln] = new LitTab(ln, op2, 0);
+                        ln++;
+                    }
+                    loc++;
+                    i++;
+                }
+            } else if (check(m) == 2) {
+                if (input[i][0] == null) {
+                    String op1 = input[i][2];
+                    String op2 = input[i][3];
+                    int temp = comp(op1, symTab, sn);
+                    if (temp != 99) {
+                        symTab[temp] = new SymTab(temp, op1, loc);
+                    }
+                    loc += Integer.parseInt(op2);
+                    i++;
+                } else {
+                    String op1 = input[i][0];
+                    symTab[sn] = new SymTab(sn, op1, loc);
+                    sn++;
+                    String op2 = input[i][3];
+                    int temp = comp(op1, symTab, sn);
+                    if (temp != 99) {
+                        symTab[temp] = new SymTab(temp, op1, loc);
+                    }
+                    loc += Integer.parseInt(op2);
+                    i++;
+                }
+            } else if (check(m) == 3) {
+                if (input[i][0] == null) {
+                    String op1 = input[i][2];
+                    String op2 = input[i][3];
+                    int temp = comp(op1, symTab, sn);
+                    if (temp != 99) {
+                        symTab[temp] = new SymTab(temp, op1, loc);
+                    }
+                    loc++;
+                    i++;
+                } else {
+                    String op1 = input[i][0];
+                    symTab[sn] = new SymTab(sn, op1, loc);
+                    sn++;
+                    String op2 = input[i][3];
+                    int temp = comp(op1, symTab, sn);
+                    if (temp != 99) {
+                        symTab[temp] = new SymTab(temp, op1, loc);
+                    }
+                    loc++;
+                    i++;
+                }
+            } else if (check(m) == 4) {
+                poolTab[pn] = new PoolTab(pn, ln);
+                pn++;
+                while (Inc != ln) {
+                    litTab[Inc].setAddr(loc);
+                    Inc++;
+                    loc++;
+                }
+                i++;
+            }
+            m = input[i][1];
+        }
+
+        System.out.println("Symbol Table");
+        System.out.println("Index\tSymbol\tAddress");
+        for (i = 0; i < sn; i++) {
+            System.out.println(symTab[i].index + "\t" + symTab[i].name + "\t" + symTab[i].addr);
+        }
+
+        System.out.println("\nLiteral Table");
+        System.out.println("Index\tLiteral\tAddress");
+        for (i = 0; i < ln; i++) {
+            System.out.println(litTab[i].index + "\t" + litTab[i].name + "\t" + litTab[i].addr);
+        }
+
+        System.out.println("\nPool Table");
+        System.out.println("Pool Index\tLiteral Index");
+        for (i = 0; i < pn; i++) {
+            System.out.println("\t" + poolTab[i].pIndex + "\t\t" + poolTab[i].lIndex);
+        }
+
+        System.out.println("\n\nIntermediate Code\n");
+        i = 0;
+        m = input[i][1];
+        String op1 = input[i][2];
+        String op2 = input[i][3];
+        int point = 0, in1 = 0, in2 = 0, j = 0;
+
+        System.out.print(ic(m) + ic(op1));
+        while (!m.equals("END")) {
+            if (check(m) == 1) {
+                System.out.print(ic(m) + ic(op1));
+                if (comp(op2, symTab, sn) == 0 && comp(op2, symTab, sn) == 99) {
+                    System.out.print(ic(op2));
+                } else if (comp(op2, symTab, sn) == 2) {
+                    int temp = comp(op2, litTab, ln);
+                    System.out.print("(L." + temp + ")");
+                    j++;
+                } else if (comp(op2, symTab, sn) != 1) {
+                    int temp = comp(op2, symTab, sn);
+                    System.out.print("(S," + temp + ")");
+                }
+            } else if (check(m) == 2 || check(m) == 3) {
+                System.out.print(ic(m) + ic(op2));
+                if (comp(op1, symTab, sn) != 1) {
+                    int temp = comp(op1, symTab, sn);
+                    System.out.print("(S," + temp + ")");
+                }
+            } else if (check(m) == 4) {
+                if (point + 1 != pn) {
+                    in1 = poolTab[point + 1].lIndex - poolTab[point].lIndex;
+                    in2 = poolTab[point].lIndex;
+                    point++;
+                    while (in1 > 0) {
+                        System.out.print(ic(m) + ic(litTab[in2].name));
+                        in2++;
+                        in1--;
+                    }
+                } else {
+                    in2 = poolTab[point].lIndex;
+                    while (in2 != ln) {
+                        System.out.print(ic(m) + ic(litTab[in2].name));
+                        in2++;
+                    }
+                }
+            }
+            i++;
+            m = input[i][1];
+            op1 = input[i][2];
+            op2 = input[i][3];
+            System.out.print("\n");
+        }
+
+        System.out.println(ic(m));
+    }
+
+    static int check(String m) {
+        if (m.equals("MOVER") || m.equals("ADD")) {
+            return 1;
+        } else if (m.equals("DS")) {
+            return 2;
+        } else if (m.equals("DC")) {
+            return 3;
+        } else if (m.equals("LTORG")) {
+            return 4;
+        }
+        return -1;
+    }
+
+    static int comp(String m, SymTab[] s, int sn) {
+        if (m.equals("AREG") || m.equals("BREG") || m.equals("CREG"))
+            return 0;
+        else if (m.charAt(0) == '=')
+            return 2;
+        else if (m.charAt(0) == 'L')
+            return 99;
+        for (int i = 0; i < sn; i++) {
+            if (m.equals(s[i].name)) {
+                return 1;
+            }
+        }
+        return 99;
+    }
+
+    static int comp(String m, LitTab[] l, int ln) {
+        for (int i = 0; i < ln; i++) {
+            if (m.equals(l[i].name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    static String ic(String m) {
+        switch (m) {
+            case "MOVER": return "00 ";
+            case "ADD": return "01 ";
+            case "SUB": return "02 ";
+            case "MULT": return "03 ";
+            case "DIV": return "04 ";
+            case "LTORG": return "05 ";
+            case "DC": return "06 ";
+            case "DS": return "07 ";
+            case "START": return "08 ";
+            case "END": return "09 ";
+            default: return m + " ";
+        }
+    }
+}
+----------------------12]pass2 -assembler---------------------------------------
+import java.text.DecimalFormat;
+
+class SymTab {
+    int index;
+    String name;
+    int addr;
+
+    SymTab(int i, String s, int a) {
+        index = i;
+        name = s;
+        addr = a;
+    }
+}
+
+class LitTab {
+    int index;
+    String name;
+    int addr;
+
+    LitTab(int i, String s, int a) {
+        index = i;
+        name = s;
+        addr = a;
+    }
+
+    void setAddr(int a) {
+        addr = a;
+    }
+}
+
+public class Pass2 {
+    public static void main(String[] args) {
+        String[][] ic = {
+            {"(AD,01)", null, "(C,100)"},
+            {"(IS,04)", "(RG,01)", "(L,0)"}, 
+            {"(IS,01)", "(RG,03)", "(L,1)"}, 
+            {"(DL,01)", null, "(C,3)"}, 
+            {"(IS,04)", "(RG,01)", "(S,2)"}, 
+            {"(IS,01)", "(RG,01)", "(S,3)"}, 
+            {"(IS,05)", "(RG,01)", "(S,4)"}, 
+            {"(DL,02)", null, "(C,5)"}, 
+            {"(DL,02)", null, "(C,1)"}, 
+            {"(AD,04)", null, "(C,103)"}, 
+            {"(IS,10)", null, "(S,4)"}, 
+            {"(AD,03)", null, "(C,101)"}, 
+            {"(IS,02)", "(RG,01)", "(L,2)"}, 
+            {"(IS,03)", "(RG,03)", "(S,2)"}, 
+            {"(DL,02)", null, "(C,5)"}, 
+            {"(AD,03)", null, "(C,111)"}, 
+            {"(IS,00)", null, null}, 
+            {"(DL,02)", null, "(C,19)"}, 
+            {"(AD,02)", null, null}, 
+            {"(DL,02)", null, "(C,1)"}
+        };
+
+        SymTab[] s = new SymTab[20];
+        LitTab[] l = new LitTab[20];
+
+        // Initialize symbol and literal tables
+        s[0] = new SymTab(0, "A", 102);
+        s[1] = new SymTab(1, "LI", 105);
+        s[2] = new SymTab(2, "B", 112);
+        s[3] = new SymTab(3, "C", 103);
+        s[4] = new SymTab(4, "D", 103);
+
+        l[0] = new LitTab(0, "='5'", 108);
+        l[1] = new LitTab(1, "='1'", 109);
+        l[2] = new LitTab(2, "='1'", 113);
+
+        int i = 0, j = 0, ind = 0;
+        String m, op1, op2, temp;
+        char[] arr1, arr2, arr3;
+
+        DecimalFormat df = new DecimalFormat("000");
+
+        while (i < ic.length) {
+            temp = null;
+            arr1 = null;
+            arr2 = null;
+            arr3 = null;
+            m = ic[i][0];
+            op1 = ic[i][1];
+            op2 = ic[i][2];
+
+            arr1 = m.toCharArray();
+            if (op1 != null) {
+                arr2 = op1.toCharArray();
+            }
+            if (op2 != null) {
+                arr3 = op2.toCharArray();
+            }
+
+            if (arr1[1] == 'I' && arr1[2] == 'S') {
+                // Print first two columns for IS
+                System.out.print(arr1[4] + "" + arr1[5] + "\t");
+                System.out.print((op1 != null ? arr2[4] + "" + arr2[5] : "00") + "\t");
+
+                if (op2 != null) {
+                    if (arr3[1] == 'R' && arr3[2] == 'G') {
+                        System.out.print(arr3[4] + "" + arr3[5] + "\t");
+                    } else if (arr3[1] == 'S') {
+                        ind = Character.getNumericValue(arr3[3]);
+                        j = 4;
+                        while (arr3[j] != ')') {
+                            ind = ind * 10 + Character.getNumericValue(arr3[j]);
+                            j++;
+                        }
+                        System.out.print(s[ind].addr + "\t");
+                    } else if (arr3[1] == 'L') {
+                        ind = Character.getNumericValue(arr3[3]);
+                        j = 4;
+                        while (arr3[j] != ')') {
+                            ind = ind * 10 + Character.getNumericValue(arr3[j]);
+                            j++;
+                        }
+                        System.out.print(l[ind].addr + "\t");
+                    }
+                }
+                System.out.print("\n"); // Ensure newline for IS entries
+            } else if (arr1[1] == 'D' && arr1[2] == 'L') {
+                if (arr1[5] == '2') {
+                    System.out.print("00\t00\t");
+                    j = 3;
+                    while (arr3[j] != ')') {
+                        if (temp == null) {
+                            temp = String.valueOf(arr3[j]);
+                        } else {
+                            temp = temp.concat(String.valueOf(arr3[j]));
+                        }
+                        j++;
+                    }
+                    System.out.print(df.format(Integer.parseInt(temp)) + "\n");
+                }
+            }
+            i++;
+        }
+    }
+}
+-------------------13]pass-1 micro-processor----------------------------
+class MNT {
+    int index;
+    String name;
+    int defIndex;
+
+    MNT(int i, String a, int j) {
+        index = i;
+        name = a;
+        defIndex = j;
+    }
+}
+
+class MDT {
+    int index;
+    String[] def;
+
+    MDT() {
+        index = 0;
+        def = new String[4];
+    }
+
+    void print() {
+        for (String s : def) {
+            if (s != null) {
+                System.out.print(s + " ");
+            }
+        }
+        System.out.println();
+    }
+}
+
+public class Pass1Macro {
+    public static void main(String[] args) {
+        String[][] input = {
+            {"MACRO", "INCR", "&A", "&B", "&REC"},
+            {null, "MOVER", "&REG", "&A", null},
+            {null, "ADDS", "&A", "&B", null},
+            {null, "MOVEM", "&REG", "&A", null},
+            {"MEND", null, null, null, null},
+            {"MACRO", "ADDS", "&F", "&S", null},
+            {null, "MOVER", "AREG", "&F", null},
+            {null, "ADD", "AREG", "&S", null},
+            {null, "MOVEM", "AREG", "&S", null},
+            {null, "WRITE", "&S", null, null},
+            {"MEND", null, null, null, null},
+            {"MACRO", "SUBS", "&F", "&S", null},
+            {null, "MOVER", "BREG", "&F", null},
+            {null, "SUB", "BREG", "&S", null},
+            {null, "MOVEM", "BREG", "&S", null},
+            {null, "WRITE", "&S", null, null},
+            {"MEND", null, null, null, null},
+            {null, "START", null, "200", null},
+            {null, "READ", "N1", null, null},
+            {null, "READ", "N2", null, null},
+            {null, "ADDS", "N1", "N2", null},
+            {null, "SUBS", "N1", "N2", null},
+            {null, "INCR", "N1", "N2", "DREG"},
+            {null, "STOP", null, null, null},
+            {"N1", "DS", "2", null, null},
+            {"N2", "DS", "2", null, null},
+            {null, "END", null, null, null}
+        };
+
+        MNT[] n = new MNT[20];
+        MDT[] d = new MDT[20];
+
+        int i = 0, nc = 0, dc = 0;
+
+        while (i < input.length) {
+            String arr1 = null, arr2 = null, arr3 = null, arr4 = null, arr5 = null;
+
+            if (input[i][0] != null) arr1 = input[i][0];
+            if (input[i][1] != null) arr2 = input[i][1];
+            if (input[i][2] != null) arr3 = input[i][2];
+            if (input[i][3] != null) arr4 = input[i][3];
+            if (input[i][4] != null) arr5 = input[i][4];
+
+            if ("MACRO".equals(arr1)) {
+                n[nc] = new MNT(nc, arr2, dc);
+                nc++;
+
+                while (!"MEND".equals(arr1)) {
+                    d[dc] = new MDT();
+                    d[dc].index = dc;
+                    d[dc].def[0] = arr2;
+
+                    if (arr3 != null) {
+                        d[dc].def[1] = arr3;
+                    }
+                    if (arr4 != null) {
+                        d[dc].def[2] = arr4;
+                    }
+                    if (arr5 != null) {
+                        d[dc].def[3] = arr5;
+                    }
+
+                    dc++;
+                    i++;
+                    if (i < input.length) {
+                        arr1 = input[i][0];
+                        arr2 = input[i][1];
+                        arr3 = input[i][2];
+                        arr4 = input[i][3];
+                        arr5 = input[i][4];
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            if ("MEND".equals(arr1)) {
+                d[dc] = new MDT();
+                d[dc].index = dc;
+                d[dc].def[0] = arr1;
+                dc++;
+            }
+
+            i++;
+        }
+
+        System.out.print("MNT\nIndex\tName\tMDT_Index\n");
+        for (i = 0; i < nc; i++) {
+            System.out.println(n[i].index + "\t" + n[i].name + "\t" + n[i].defIndex);
+        }
+
+        System.out.print("\nMDT\nIndex\tDefinition\n");
+        for (i = 0; i < dc; i++) {
+            System.out.print(d[i].index + "\t");
+            d[i].print();
+        }
+    }
+}
+
+
+------------------------------14]pass2-microprocessor----------------------------------
+import java.util.ArrayList;
+
+class MNT {
+    int index;
+    String name;
+    int defIndex;
+
+    MNT(int i, String a, int j) {
+        index = i;
+        name = a;
+        defIndex = j;
+    }
+}
+
+class MDT {
+    int index;
+    String[] def;
+
+    MDT(int i, String m, String op1, String op2, String op3) {
+        index = i;
+        def = new String[4];
+        def[0] = m;
+        def[1] = op1;
+        def[2] = op2;
+        def[3] = op3;
+    }
+}
+
+public class Pass2Macro {
+    public static void main(String[] args) {
+        // Example MNT and MDT from the first pass
+        MNT[] mnt = new MNT[3];
+        mnt[0] = new MNT(0, "INCR", 0);
+        mnt[1] = new MNT(1, "ADDS", 5);
+        mnt[2] = new MNT(2, "SUBS", 11);
+
+        MDT[] mdt = new MDT[20];
+        mdt[0] = new MDT(0, "INCR", "&A", "&B", "&REG");
+        mdt[1] = new MDT(1, "MOVER", "#3", "#1", null);
+        mdt[2] = new MDT(2, "ADDS", "#1", "#2", null);
+        mdt[3] = new MDT(3, "MOVEM", "#3", "#1", null);
+        mdt[4] = new MDT(4, "MEND", null, null, null);
+        mdt[5] = new MDT(5, "ADDS", "&F", "&S", null);
+        mdt[6] = new MDT(6, "MOVER", "AREG", "#1", null);
+        mdt[7] = new MDT(7, "ADD", "AREG", "#2", null);
+        mdt[8] = new MDT(8, "MOVEM", "AREG", "#2", null);
+        mdt[9] = new MDT(9, "WRITE", "#2", null, null);
+        mdt[10] = new MDT(10, "MEND", null, null, null);
+        mdt[11] = new MDT(11, "SUBS", "&F", "&S", null);
+        mdt[12] = new MDT(12, "MOVER", "BREG", "#1", null);
+        mdt[13] = new MDT(13, "SUB", "BREG", "#2", null);
+        mdt[14] = new MDT(14, "MOVEM", "BREG", "#2", null);
+        mdt[15] = new MDT(15, "WRITE", "#2", null, null);
+        mdt[16] = new MDT(16, "MEND", null, null, null);
+
+        String[][] inputProgram = {
+            {null, "START", null, "200", null},
+            {null, "READ", "N1", null, null},
+            {null, "READ", "N2", null, null},
+            {null, "INCR", "N1", "N2", "DREG"},
+            {null, "STOP", null, null, null},
+            {"N1", "DS", "2", null, null},
+            {"N2", "DS", "2", null, null},
+            {null, "END", null, null, null}
+        };
+
+        ArrayList<String[]> outputProgram = new ArrayList<>();
+
+        for (String[] line : inputProgram) {
+            if (line[1] != null) {
+                String macroName = line[1];
+                MNT macro = findMacro(mnt, macroName);
+                if (macro != null) {
+                    int mdtIndex = macro.defIndex;
+
+                    while (mdtIndex < mdt.length) {
+                        if (mdt[mdtIndex].def[0].equals("MEND")) {
+                            break; // Exit on "MEND"
+                        }
+
+                        String[] newLine = new String[5];
+                        newLine[0] = line[0]; // Copy the label if it exists
+                        newLine[1] = mdt[mdtIndex].def[0]; // Opcode
+
+                        // Handle parameters
+                        for (int i = 1; i <= 3; i++) {
+                            if (mdt[mdtIndex].def[i] != null) {
+                                if (mdt[mdtIndex].def[i].startsWith("&")) {
+                                    // Replace parameter placeholders
+                                    newLine[i + 1] = line[i]; 
+                                } else {
+                                    newLine[i + 1] = mdt[mdtIndex].def[i]; // Use the defined value
+                                }
+                            }
+                        }
+
+                        outputProgram.add(newLine);
+                        mdtIndex++; // Move to the next MDT entry
+                    }
+                } else {
+                    // If not a macro, add the line as it is
+                    outputProgram.add(line);
+                }
+            } else {
+                outputProgram.add(line);
+            }
+        }
+
+        // Print the output program
+        System.out.println("Output Program:");
+        for (String[] outLine : outputProgram) {
+            for (String s : outLine) {
+                if (s != null) {
+                    System.out.print(s + "\t");
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    private static MNT findMacro(MNT[] mnt, String macroName) {
+        for (MNT macro : mnt) {
+            if (macro != null && macro.name.equals(macroName)) {
+                return macro;
+            }
+        }
+        return null; // Not found
+    }
+}
